@@ -7,6 +7,12 @@
     <title>Raumschiffschlacht</title>
 
     <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            height: 100%;
+        }
         canvas {
             background-color: rgba(0, 0, 0, 0.8);
             display: block;
@@ -54,12 +60,10 @@
             }
         }
 
-
         document.onkeyup = function(e) {
             if (e.keyCode == 32) {
                 KEY_SPACE = false;
             }
-
 
             if (e.keyCode == 38) {
                 KEY_UP = false;
@@ -74,11 +78,18 @@
             canvas = document.getElementById('canvas');
             ctx = canvas.getContext('2d');
             loadImages();
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas, false);
             setInterval(update, 700 / 40);
             setInterval(createufos, 1000);
             setInterval(checkForCollision, 1000 / 25);
             setInterval(checkForShoot, 1000 / 10);
             draw();
+        }
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
         }
 
         function checkForCollision() {
@@ -129,8 +140,8 @@
         function createufos() {
             if (gameRunning) {
                 let ufo = {
-                    x: 800,
-                    y: Math.random() * 500,
+                    x: window.innerWidth,
+                    y: Math.random() * (window.innerHeight - 65),
                     width: 140,
                     height: 65,
                     src: 'img/ufo.png',
@@ -180,16 +191,13 @@
         }
 
         function loadImages() {
-    backgroundImage.src = 'img/earth.png';
-    backgroundImage.style.backgroundSize = 'cover'; // Anpassen der Größe des Hintergrundbildes
-    jet.img = new Image();
-    jet.img.src = jet.src;
-}
-
-        
+            backgroundImage.src = 'img/earth.png';
+            jet.img = new Image();
+            jet.img.src = jet.src;
+        }
 
         function draw() {
-            ctx.drawImage(backgroundImage, 0, 0);
+            ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
             ctx.drawImage(jet.img, jet.x, jet.y, jet.width, jet.height);
 
             ufos.forEach(function(ufo) {
@@ -216,7 +224,7 @@
 </head>
 
 <body onload="startGame()">
-    <canvas id="canvas" width="920" height="580"></canvas>
+    <canvas id="canvas"></canvas>
 </body>
 
 </html>
