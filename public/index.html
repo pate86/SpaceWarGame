@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raumschiffschlacht</title>
+
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            height: 100%;
+        }
+        canvas {
+            background-color: rgba(0, 0, 0, 0.8);
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+
+    <script>
+        let KEY_SPACE = false; // 32
+        let KEY_UP = false; // 38
+        let KEY_DOWN = false; // 40
+        let canvas;
+        let ctx;
+        let backgroundImage = new Image();
+
+        let jet = {
+            x: 40,
+            y: 200,
+            width: 130,
+            height: 50,
+            src: 'img/jet.png'
+        };
+
+        let ufos = [];
+        let bullets = [];
+
+        let score = 0;
+        let gameRunning = true;
+
+        document.onkeydown = function(e) {
+            if (e.keyCode == 32) {
+                KEY_SPACE = true;
+            }
+
+            if (e.keyCode == 38) {
+                KEY_UP = true;
+            }
+
+            if (e.keyCode == 40) {
+                KEY_DOWN = true;
+            }
+        }
+
+        document.onkeyup = function(e) {
+            if (e.keyCode == 32) {
+                KEY_SPACE = false;
+            }
+
+            if (e.keyCode == 38) {
+                KEY_UP = false;
+            }
+
+            if (e.keyCode == 40) {
+                KEY_DOWN = false;
+            }
+        }
+
+        function startGame() {
+            canvas = document.getElementById('canvas');
+            ctx = canvas.getContext('2d');
+            loadImages();
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas, false);
+            setInterval(update, 700 / 40);
+            setInterval(createufos, 1000);
+            setInterval(checkForCollision, 1000 / 25);
+            setInterval(checkForShoot, 1000 / 10);
+            draw();
+        }
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        function checkForCollision() {
+            ufos.forEach(function(ufo) {
+                // Check if UFO collides with jet
+                if (jet.x + jet.width > ufo.x &&
+                    jet.y + jet.height > ufo.y &&
+                    jet.x < ufo.x &&
+                    jet.y < ufo.y + ufo.height
+                ) {
+                    jet.img.src = 'img/boom.png';
+                    console.log('Collision with UFO!!!');
+                    gameRunning = false;
+                }
+
+                bullets.forEach(function(bullet) {
+                    // Check if bullet collides with UFO
+                    if (bullet.x + bullet.width > ufo.x &&
+                        bullet.y + bullet.height > ufo.y &&
+                        bullet.x < ufo.x &&
+                        bullet.y < ufo.y + ufo.height
+                    ) {
+                        ufo.hit = true;
+                        ufo.img.src = 'img/boom.png';
+                        console.log('Collision with UFO!!!');
+
+                        // Increase score
+                        score += 10;
+
+                        // Remove bullet
+                        bullets = bullets.filter(b => b != bullet);
+
+                        setTimeout(() => {
+                            ufos = ufos.filter(u => u != ufo);
+                        }, 2000);
+                    }
+                });
+
+            });
+
+            if (!gameRunning) {
+                ctx.font = "30px Arial";
+                ctx.fillStyle = "red";
+                ctx.fillText("Game Over - Press Ctrl+R to Restart", canvas.width / 2 - 250, canvas.height / 2);
+            }
+        }
+
+        function createufos() {
+            if (gameRunning) {
+                let ufo = {
+                    x: window.innerWidth,
+                    y: Math.random() * (window.innerHeight - 65),
+                    width: 140,
+                    height: 65,
+                    src: 'img/ufo.png',
+                    img: new Image()
+                };
+                ufo.img.src = ufo.src;
+                ufos.push(ufo);
+            }
+        }
+
+        function checkForShoot() {
+            if (gameRunning && KEY_SPACE) {
+                let bullet = {
+                    x: jet.x + 100,
+                    y: jet.y + 22,
+                    width: 25,
+                    height: 20,
+                    src: 'img/bullet.png',
+                    img: new Image()
+                };
+                bullet.img.src = bullet.src;
+
+                bullets.push(bullet);
+            }
+        }
+
+        function update() {
+            if (gameRunning) {
+                if (KEY_UP) {
+                    jet.y -= 9;
+                }
+
+                if (KEY_DOWN) {
+                    jet.y += 9;
+                }
+
+                ufos.forEach(function(ufo) {
+                    if (!ufo.hit) {
+                        ufo.x -= 5;
+                    }
+                });
+
+                bullets.forEach(function(bullet) {
+                    bullet.x += 15;
+                });
+            }
+        }
+
+        function loadImages() {
+            backgroundImage.src = 'img/earth.png';
+            jet.img = new Image();
+            jet.img.src = jet.src;
+        }
+
+        function draw() {
+            ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
+            ctx.drawImage(jet.img, jet.x, jet.y, jet.width, jet.height);
+
+            ufos.forEach(function(ufo) {
+                ctx.drawImage(ufo.img, ufo.x, ufo.y, ufo.width, ufo.height);
+            });
+
+            bullets.forEach(function(bullet) {
+                ctx.drawImage(bullet.img, bullet.x, bullet.y, bullet.width, bullet.height);
+            });
+
+            ctx.font = "20px Arial";
+            ctx.fillStyle = "white";
+            ctx.fillText("Score: " + score, 10, 30);
+
+            if (!gameRunning) {
+                ctx.font = "30px Arial";
+                ctx.fillStyle = "red";
+                ctx.fillText("Game Over - Press Ctrl+R to Restart", canvas.width / 2 - 250, canvas.height / 2);
+            }
+
+            requestAnimationFrame(draw);
+        }
+    </script>
+</head>
+
+<body onload="startGame()">
+    <canvas id="canvas"></canvas>
+</body>
+
+</html>
